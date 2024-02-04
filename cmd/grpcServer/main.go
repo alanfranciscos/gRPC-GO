@@ -9,11 +9,13 @@ import (
 	"github.com/alanfranciscos/gRPC-GO/internal/service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	// Abre a conexão com db
-	db, err := sql.Open("sqlite3", "./db.sqlite3")
+	db, err := sql.Open("sqlite3", "./db.sqlite")
 	if err != nil {
 		panic(err)
 	}

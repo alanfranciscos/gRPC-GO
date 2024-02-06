@@ -87,3 +87,13 @@ func (c *Course) FindByCategoryID(categoryID string) ([]Course, error) {
 
 	return courses, nil
 }
+
+func (c *Course) Find(id string) (Course, error) {
+	var name, description, categoryId string
+	err := c.db.QueryRow("SELECT name, description, category_id FROM courses WHERE id = $1", id).
+		Scan(&name, &description, &categoryId)
+	if err != nil {
+		return Course{}, err
+	}
+	return Course{Id: id, Name: name, Description: description, CategoryId: categoryId}, nil
+}

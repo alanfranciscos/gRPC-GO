@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"io"
 
 	database "github.com/alanfranciscos/gRPC-GO/internal/databases"
 	"github.com/alanfranciscos/gRPC-GO/internal/pb"
@@ -34,7 +35,7 @@ func (c *CategoryService) CreateCategory(ctx context.Context, in *pb.CreateCateg
 	return categoryResponse, nil
 }
 
-func (c * CategoryService) ListCategories(ctx context.Context, in *pb.Blank) (*pb.CategoryList, error) {
+func (c *CategoryService) ListCategories(ctx context.Context, in *pb.Blank) (*pb.CategoryList, error) {
 	categories, err := c.CategoryDb.FindAll()
 
 	if err != nil {
@@ -42,7 +43,7 @@ func (c * CategoryService) ListCategories(ctx context.Context, in *pb.Blank) (*p
 	}
 
 	var categoryList []*pb.Category
-	
+
 	for _, category := range categories {
 		categoryList = append(categoryList, &pb.Category{
 			Id:          category.Id,
@@ -70,4 +71,30 @@ func (c *CategoryService) GetCategory(ctx context.Context, in *pb.CategoryGetReq
 	}
 
 	return categoryResponse, nil
+}
+
+func (c *CategoryService) CreateCategoryStream(stream pb.CategoryService_CreateCategoryStreamServer) error {
+	categories := &pb.CategoryList{}
+
+	for {
+		category, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(categories)
+		}
+
+		if err != nil {
+			return err
+		}
+
+		categoryResult, err := c.CategoryDb.Create(category.Name, category.Description)
+		if err != nil {
+			return err
+		}
+
+		categories.Categories = append(categories.Categories, &pb.Category{
+			Id:          categoryResult.Id,
+			Name:        categoryResult.Name,
+			Description: categoryResult.Description,
+		})
+	}
 }
